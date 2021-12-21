@@ -66,7 +66,7 @@ class BodyOrb:
             A dict of BodyOrb attributes, e.g. x = {"a":1.0, "e":1e-2, "inc":np.radians(5), "peri":np.radians(10), "node":np.radians(15), "f":np.radians(20)}
         """
         for y in x:
-            print(y)
+            # print(y)
             exec("self.{} = {}".format(y, x[y])) # https://stackoverflow.com/questions/8307612/how-to-create-class-variable-dynamically-in-python
 
     # Add a load from pandas dataframe option!
@@ -110,6 +110,8 @@ class BodyOrb:
             Number of points used to calculate orbits
         '''
 
+        # !!! add warning to catch self.ep,eQ == None, need to call calc_orb_vectors
+
         # specify f_true from 0 to 2pi radians: i.e. number of points on orbit, THE TRUE ANOMALY
         # by going from 0 to exactly 2pi the first and last position will be the same so that a line plot will be a closed loop
         # !!! NB that f_true will not be evenly spaced around the most eccentric orbits, leading to not well rounded orbits. Draw a different distribution to sample high e orbits?
@@ -152,7 +154,7 @@ class BodyOrb:
         df_pos_vel = pd.DataFrame(data, columns = ["f","x","y","z","vx","vy","vz"])
         return df_pos_vel
 
-        # !!! pos and vel as a function of other parameters, e.g. time, mean anomaly etc.
-        # Use the additional functions in orb_funcs.py to convert to f_true before passing to pos_vel_from_orbit
+    # !!! pos and vel as a function of other parameters, e.g. time, mean anomaly etc.
+    # Use the additional functions in orb_funcs.py to convert to f_true before passing to pos_vel_from_orbit?
 
     # !!! Cartesian position and velocity to orbit (see old py_func code)
