@@ -69,6 +69,8 @@ class BodyOrb:
             print(y)
             exec("self.{} = {}".format(y, x[y])) # https://stackoverflow.com/questions/8307612/how-to-create-class-variable-dynamically-in-python
 
+    # Add a load from pandas dataframe option!
+
     def calc_orb_vectors(self):
         """ Find the unit vectors describing the orbit orientation
         Parameters
@@ -86,9 +88,15 @@ class BodyOrb:
 
     def calc_values(self):
         # !!! write a function to calculate missing orbital elements if only some are provided?
+        # need to handle the compound angles such as longitude of perihelion and mean longitude.
+        # Especially in the cases where the regular elements are poorly defined, e.g. flat circular orbits
 
         self.n=np.sqrt(self.mu/(self.a**3))
         self.eta=np.sqrt(1.0-(self.e**2))
+
+        if self.f is None and self.M is not None:
+            self.f = orb_funcs.f_from_M(self.M,self.e)
+
 
     def planet_orbit(self,n = 100):
         '''
@@ -102,8 +110,9 @@ class BodyOrb:
             Number of points used to calculate orbits
         '''
 
-        #specify f_true from 0 to 2pi radians: i.e. number of points on orbit, THE TRUE ANOMALY
+        # specify f_true from 0 to 2pi radians: i.e. number of points on orbit, THE TRUE ANOMALY
         # by going from 0 to exactly 2pi the first and last position will be the same so that a line plot will be a closed loop
+        # !!! NB that f_true will not be evenly spaced around the most eccentric orbits, leading to not well rounded orbits. Draw a different distribution to sample high e orbits?
         f_true = np.linspace(0.0,2.0*np.pi, n)
         f_true = np.reshape(f_true,(n,1))
 
@@ -118,12 +127,13 @@ class BodyOrb:
         return df_pos
 
     def pos_vel_from_orbit(self,f_true):
-        '''function to find xyz and vxvyvz from the a,e,I,OMEGA,omega,f_true orbit data, where mu=G(M+m)
-
+        '''
+        Function to find xyz and vxvyvz from the a,e,I,OMEGA,omega,f_true orbit data, where mu=G(M+m)
 
         Parameters
         ----------
         self
+            the BodyOrb class
         f_true
             value (or array) of true anomaly. If array must be correct shape - (N,1)
         '''
@@ -142,6 +152,7 @@ class BodyOrb:
         df_pos_vel = pd.DataFrame(data, columns = ["f","x","y","z","vx","vy","vz"])
         return df_pos_vel
 
-    # pos and vel as a function of other parameters, e.g. time, mean anomaly etc
+        # !!! pos and vel as a function of other parameters, e.g. time, mean anomaly etc.
+        # Use the additional functions in orb_funcs.py to convert to f_true before passing to pos_vel_from_orbit
 
-    # Cartesian position and velocity to orbit
+    # !!! Cartesian position and velocity to orbit (see old py_func code)
