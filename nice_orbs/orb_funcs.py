@@ -108,7 +108,7 @@ def E_from_M(M,e):
         eccentricity
     '''
 
-    if e>0.662743>0: # does this catch arrays too?
+    if e>0.662743: # does this catch arrays too?
         # throw a proper warning
         print("WARNING: high e, beware of divergence!")
 
