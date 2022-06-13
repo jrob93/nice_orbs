@@ -97,6 +97,7 @@ class BodyOrb:
         if self.f is None and self.M is not None:
             self.f = orb_funcs.f_from_M(self.M,self.e)
 
+        # also add options to calc things like semimajor axis from perihelion/aphelion etc. See pyFair/test_code/gen_initial_conditions.ipynb
 
     def planet_orbit(self,n = 100):
         '''
@@ -156,5 +157,3 @@ class BodyOrb:
 
     # !!! pos and vel as a function of other parameters, e.g. time, mean anomaly etc.
     # Use the additional functions in orb_funcs.py to convert to f_true before passing to pos_vel_from_orbit?
-
-    # !!! Cartesian position and velocity to orbit (see old py_func code)
