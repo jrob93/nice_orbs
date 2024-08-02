@@ -91,13 +91,23 @@ class BodyOrb:
         # need to handle the compound angles such as longitude of perihelion and mean longitude.
         # Especially in the cases where the regular elements are poorly defined, e.g. flat circular orbits
 
+        # print("calc vals")
+
         self.n=np.sqrt(self.mu/(self.a**3))
         self.eta=np.sqrt(1.0-(self.e**2))
 
         if self.f is None and self.M is not None:
+            # print("calc f")
             self.f = orb_funcs.f_from_M(self.M,self.e)
-
+        if self.long_peri is None and ((self.node is not None) and (self.peri is not None)):
+            # print("calc long_peri")
+            self.long_peri = self.node + self.peri
+        if self.mean_long is None and self.long_peri is not None:
+            # print("calc mean_long")
+            self.mean_long = self.long_peri + self.M
         # also add options to calc things like semimajor axis from perihelion/aphelion etc. See pyFair/test_code/gen_initial_conditions.ipynb
+        # TODO: calculate an orbital period (add as a BodyOrb parameter)
+        # TODO: logging; track what is calculated (see print statements)
 
     def planet_orbit(self,n = 100):
         '''
