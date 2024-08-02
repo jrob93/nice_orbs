@@ -5,6 +5,8 @@ Requirements:
 Need to add things to setup.py for a smooth install, for now see the conda environment file:
 conda env create -f nice_orbs_env.yml
 
+(sbpy also required if using database_tools module from atlas-phase-curves)
+
 Installation:
 
 pip install git+https://github.com/jrob93/nice_orbs
