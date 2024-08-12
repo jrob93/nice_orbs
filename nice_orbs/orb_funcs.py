@@ -56,7 +56,7 @@ def calc_eQ_vec(node,peri,inc):
     eQz=np.sin(inc)*np.cos(peri) #z
 
     return np.array([eQx, eQy, eQz])
-
+    
 def M_from_E(E,e):
     """
     Find mean anomaly from the eccentric anomaly
@@ -172,3 +172,102 @@ def f_from_t(t,e,n,M0,t0):
     M = M_from_t(t,n,M0,t0)
     f_true = f_from_M(M,e)
     return f_true
+
+def rot_matrix(alpha = 0, beta = 0, gamma = 0, order = [0, 1, 2]):
+    """Rotation about the x, y, z axes (right handed) in a given order. All angles are in radians.
+
+    Parameters
+    ----------
+    alpha:
+        angle of right handed rotation around x axis using matrix Rx
+    beta:
+        angle of right handed rotation around y axis using matrix Ry
+    gamma:
+        angle of right handed rotation around z axis using matrix Rz
+    order:
+        order of operation for rotation about each axis, where Rx = 0, Ry = 1, Rz = 2.
+        E.g. for rotating around x, then y, then z: R = Rz . Ry . Rx and order = [0,1,2]
+        For rotating around z, then y, then x: R = Rx . Ry . Rz and order = [2,1,0]
+
+    Returns
+    R:
+        Rotation matrix for a rotation about each axis (in a given order)
+
+    """
+    
+    Rx = np.array([[1, 0, 0],[0, np.cos(alpha), -np.sin(alpha)],[0, np.sin(alpha), np.cos(alpha)]])
+    Ry = np.array([[np.cos(beta), 0, np.sin(beta)],[0, 1, 0],[-np.sin(beta), 0, np.cos(beta)]])
+    Rz = np.array([[np.cos(gamma), -np.sin(gamma), 0],[np.sin(gamma), np.cos(gamma), 0],[0, 0, 1]])
+    
+    R_list = [Rx, Ry, Rz]
+    
+    R = np.dot(np.dot(R_list[order[2]], R_list[order[1]]), R_list[order[0]]) # the rotation order is important!
+    
+    return R
+
+def mutual_ascending_node_f_true(bod1,bod2):
+    """
+    Return the f_true (in bod1 and bod2 elements) for the mutual ascending node of bod2 relative to bod1.
+    N.B. to get the descending node, use node_mutual_f2 += np.pi
+    
+    bod1: BodyOrb object
+        The reference orbit
+    bod2: BodyOrb object
+        Orbit that we are determining mutual ascending node for
+        
+    Returns
+    
+    node_mutual_f2,node_mutual_f2
+    """
+    
+    # define the transforms
+    trans_bod1 = rot_matrix(alpha = bod1.inc, gamma = bod1.node) # transform from cartesian to bod1 coplanar frame
+    _trans_bod1 = np.linalg.inv(trans_bod1) # inverse: transform from bod1 frame to cartesian
+    
+    # define the required unit vectors and their transforms
+    unit_x = np.array([1,0,0])
+    unit_z = np.array([0,0,1])
+    _unit_x = np.dot(trans_bod1,unit_x)
+    _unit_z = np.dot(trans_bod1,unit_z)
+    
+    # transform the bod2 orbital vectors to the bod1 coplanar reference frame (?)
+    bod2_ep = bod2.ep
+    bod2_eQ = bod2.eQ
+    _bod2_ep = np.dot(_trans_bod1, bod2_ep)
+    _bod2_eQ = np.dot(_trans_bod1, bod2_eQ)
+        
+    # determine the f_true of the mutual ascending node for bod2
+    # calculated when z component of position vector (in the bod1 reference frame) equals zero
+    node_mutual_f2 = np.arctan2(-_bod2_ep[2],_bod2_eQ[2])
+    # print("mutual node f (bod2) = {}".format(np.degrees(node_mutual_f2)))
+    
+    # Perform checks on the angle:
+    # Ensure that this is the ascending node
+    _node2 = bod2.r_vec(node_mutual_f2)
+    _node_vel2 = bod2.v_vec(node_mutual_f2)
+    # if np.dot(_node_vel2,_unit_z)>0:
+    #     # print("ascending node")
+    if np.dot(_node_vel2,_unit_z)<0:
+        # print("descending node, convert to ascending")
+        node_mutual_f2 += np.pi # get the other node
+    # else:
+    #     print("node ill defined?")
+    #     print(np.dot(_node_vel2,_unit_z))
+    # Also ensure node_mutual_f2 is [0,2pi]
+    while node_mutual_f2 < 0: 
+        # print("correct node_mutual_f2")
+        node_mutual_f2 += (2.0*np.pi) 
+
+    # determine the mutual nodal angle for bod1
+    # this is the angle between the bod1 frame x vector and the bod2 nodal vector (which was determined in the bod1 ref frame)
+    node_mutual1 = np.arctan2(np.linalg.norm(np.cross(_unit_x,_node2)),np.dot(_unit_x,_node2))
+    # N.B. node_mutual1 is the smallest angle between the vectors, not the right hand rotation in f_true,
+    # correct the angle as required so that the rotation is correct
+    if (np.dot(_trans_bod1,np.cross(_unit_x,_node2))[2] < 0) and (node_mutual1<np.pi):
+        # print("correct node_mutual1")
+        node_mutual1 = (2.0*np.pi) - node_mutual1
+    # convert this nodal angle to f_true in the bod1 elements by accounting for the argument of periapsis
+    node_mutual_f1 = node_mutual1 - bod1.peri
+    # print("mutual node f (bod1) = {}".format(np.degrees(node_mutual_f1)))
+
+    return node_mutual_f1,node_mutual_f2

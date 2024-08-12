@@ -3,6 +3,9 @@ import pandas as pd
 from . import orb_funcs
 
 # Define the orbiting body class in this package
+# TODO: add logging
+# TODO: update doc strings
+# TODO: add unit tests
 
 class BodyOrb:
 
@@ -37,6 +40,8 @@ class BodyOrb:
         self.long_peri = None # longitude of pericentre = peri + node
         self.mean_long = None # mean longitude = peri + node + M
         self.peri_time = None # time of pericentre passage
+        self.q = None # periapsis distance
+        self.Q = None # apoapsis distance
 
         # Orbit vectors
         self.ep = None
@@ -86,19 +91,53 @@ class BodyOrb:
         self.ep = orb_funcs.calc_ep_vec(self.node,self.peri,self.inc)
         self.eQ = orb_funcs.calc_eQ_vec(self.node,self.peri,self.inc)
 
+        # TODO: add angular momentum, nodal vector, eccentricity vector...
+
     def calc_values(self):
         # !!! write a function to calculate missing orbital elements if only some are provided?
         # need to handle the compound angles such as longitude of perihelion and mean longitude.
         # Especially in the cases where the regular elements are poorly defined, e.g. flat circular orbits
 
+        # print("calc vals")
+
         self.n=np.sqrt(self.mu/(self.a**3))
         self.eta=np.sqrt(1.0-(self.e**2))
 
         if self.f is None and self.M is not None:
+            # print("calc f")
             self.f = orb_funcs.f_from_M(self.M,self.e)
+        if self.long_peri is None and ((self.node is not None) and (self.peri is not None)):
+            # print("calc long_peri")
+            self.long_peri = self.node + self.peri
+        if self.mean_long is None and self.long_peri is not None:
+            # print("calc mean_long")
+            self.mean_long = self.long_peri + self.M
+        if self.q is None and ((self.a is not None) and (self.e is not None)):
+            self.q = self.a * (1.0 - self.e)
+        if self.Q is None and ((self.a is not None) and (self.e is not None)):
+            self.Q = self.a * (1.0 + self.e)
 
         # also add options to calc things like semimajor axis from perihelion/aphelion etc. See pyFair/test_code/gen_initial_conditions.ipynb
+        # TODO: calculate an orbital period (add as a BodyOrb parameter)
+        # TODO: logging; track what is calculated (see print statements)
+        # TODO: Check validity of orbital elements, e.g when inc = 0 the ascending node is not defined (set node = 0? https://en.wikipedia.org/wiki/Longitude_of_the_ascending_node)
+        # What about e = 0?
 
+    def r_vec(self, f_true):
+
+        # find the radial distance of the orbit at all f
+        r=orb_funcs.r_elliptical(self.a,self.e,f_true)
+        pos=r*((np.cos(f_true)*self.ep)+(np.sin(f_true)*self.eQ)) # PSS eq 11.36a
+
+        return pos
+
+    def v_vec(self, f_true):
+
+        # find the radial distance of the orbit at all f
+        vel=(self.n*self.a/self.eta)*((-np.sin(f_true)*self.ep)+((self.e+np.cos(f_true))*self.eQ))
+
+        return vel
+    
     def planet_orbit(self,n = 100):
         '''
         Function to find the xyz points which describe an orbit relative to the reference point (typically heliocentric)
@@ -124,6 +163,7 @@ class BodyOrb:
 
         # calculate the r(x,y,z) position array
         pos=r*((np.cos(f_true)*self.ep)+(np.sin(f_true)*self.eQ)) # PSS eq 11.36a
+        # TODO: replace with r_vec func
 
         # return a dataframe of true anomaly and x, y, z position
         df_pos = pd.DataFrame(data = np.hstack((f_true,pos)), columns = ["f","x","y","z"])
