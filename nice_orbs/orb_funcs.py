@@ -175,6 +175,9 @@ def f_from_t(t,e,n,M0,t0):
 
 def rot_matrix(alpha = 0, beta = 0, gamma = 0, order = [0, 1, 2]):
     """Rotation about the x, y, z axes (right handed) in a given order. All angles are in radians.
+
+    Parameters
+    ----------
     alpha:
         angle of right handed rotation around x axis using matrix Rx
     beta:
@@ -185,6 +188,10 @@ def rot_matrix(alpha = 0, beta = 0, gamma = 0, order = [0, 1, 2]):
         order of operation for rotation about each axis, where Rx = 0, Ry = 1, Rz = 2.
         E.g. for rotating around x, then y, then z: R = Rz . Ry . Rx and order = [0,1,2]
         For rotating around z, then y, then x: R = Rx . Ry . Rz and order = [2,1,0]
+
+    Returns
+    R:
+        Rotation matrix for a rotation about each axis (in a given order)
 
     """
     
@@ -203,9 +210,9 @@ def mutual_ascending_node_f_true(bod1,bod2):
     Return the f_true (in bod1 and bod2 elements) for the mutual ascending node of bod2 relative to bod1.
     N.B. to get the descending node, use node_mutual_f2 += np.pi
     
-    bod1:
+    bod1: BodyOrb object
         The reference orbit
-    bod2:
+    bod2: BodyOrb object
         Orbit that we are determining mutual ascending node for
         
     Returns
