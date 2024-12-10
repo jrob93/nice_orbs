@@ -11,6 +11,15 @@ class BodyOrb:
 
     def __init__(self):
 
+        """
+        Angles in radians.
+        Physical units set by gravitational constant (G) and cental mass (M).
+        If G = 1, M = 1:
+        - mass: solar mass
+        - length: AU
+        - time: 1 yr = 2*pi units
+        """
+
         # time/epoch
         self.t = None
 
@@ -75,6 +84,7 @@ class BodyOrb:
             exec("self.{} = {}".format(y, x[y])) # https://stackoverflow.com/questions/8307612/how-to-create-class-variable-dynamically-in-python
 
     # Add a load from pandas dataframe option!
+    # what if we pass attributes with different names?
 
     def calc_orb_vectors(self):
         """ Find the unit vectors describing the orbit orientation
@@ -103,6 +113,7 @@ class BodyOrb:
         self.n=np.sqrt(self.mu/(self.a**3))
         self.eta=np.sqrt(1.0-(self.e**2))
 
+        # find true anomaly if the mean anomaly exists
         if self.f is None and self.M is not None:
             # print("calc f")
             self.f = orb_funcs.f_from_M(self.M,self.e)
